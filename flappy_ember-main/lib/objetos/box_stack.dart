@@ -1,36 +1,53 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame_audio/flame_audio.dart';
+import 'package:flappybird_dj/configuracion/assets.dart';
+import 'package:flappybird_dj/configuracion/configuration.dart';
+import 'package:flappybird_dj/configuracion/pipe_position.dart';
 
-import 'box.dart';
-import '../pantallas/game.dart';
+import 'package:flappybird_dj/objetos/box.dart';
+import 'package:flappybird_dj/pantallas/game.dart';
 
-class BoxStack extends PositionComponent with HasGameRef<FlappyEmberGame> {
-  static final Random _rng = Random();
+class PipeGroup extends PositionComponent with HasGameRef<GamePage> {
+  PipeGroup();
+
+  final _random = Random();
 
   @override
   Future<void> onLoad() async {
-    final isBottom = _rng.nextBool();
     position.x = gameRef.size.x;
-    final gameHeight = gameRef.size.y;
-    final boxHeight = Box.initialSize.y;
-    final maxStackHeight = (gameRef.size.y / Box.initialSize.y).floor() - 2;
-    final stackHeight = _rng.nextInt(maxStackHeight + 1);
-    final boxSpacing = boxHeight * (2 / 3);
-    final initialY = isBottom ? gameHeight - boxHeight : -boxHeight / 3;
-    final boxes = List.generate(stackHeight, (i) {
-      return Box(
-        position: Vector2(0, initialY + i * boxSpacing * (isBottom ? -1 : 1)),
-      );
-    });
-    addAll(isBottom ? boxes : boxes.reversed);
+
+    final heightMinusGround = gameRef.size.y - Configuration.groundHeight;
+    final spacing = 100 + _random.nextDouble() * (heightMinusGround / 4);
+    final centerY =
+        spacing + _random.nextDouble() * (heightMinusGround - spacing);
+    addAll([
+      Pipe(height: centerY - spacing / 2, pipePosition: PipePosition.top),
+      Pipe(
+          height: heightMinusGround - (centerY + spacing / 2),
+          pipePosition: PipePosition.bottom),
+    ]);
   }
 
   @override
   void update(double dt) {
-    if (position.x < -Box.initialSize.x) {
+    super.update(dt);
+    position.x -= Configuration.gameSpeed * dt;
+
+    if (position.x < -10) {
       removeFromParent();
+      updateScore();
     }
-    position.x -= gameRef.speed * dt;
+
+    if (game.isHit) {
+      removeFromParent();
+      gameRef.isHit = false;
+    }
+  }
+
+  void updateScore() {
+    gameRef.bird.score += 1;
+    FlameAudio.play(Assets.point);
   }
 }

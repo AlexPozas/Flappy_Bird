@@ -1,42 +1,57 @@
-import 'package:flame/collisions.dart';
+import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flappybird_dj/configuracion/configuration.dart';
 import 'package:flappybird_dj/objetos/box_stack.dart';
 import 'package:flappybird_dj/objetos/ground.dart';
 import 'package:flappybird_dj/objetos/player.dart';
 import 'package:flappybird_dj/objetos/sky.dart';
 
-class FlappyEmberGame extends FlameGame
-    with HasCollisionDetection, TapDetector {
-  FlappyEmberGame();
+import 'package:flutter/material.dart';
 
-  double speed = 200;
-  late final Player _player;
+class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
+  GamePage();
+
+  late Player bird;
+  late TextBoxComponent score;
+  Timer interval = Timer(Configuration.pipeInterval, repeat: true);
+  bool isHit = false;
 
   @override
   Future<void> onLoad() async {
-    // Add your components here
-    add(_player = Player());
-    add(Sky());
-    add(Ground());
-    add(ScreenHitbox());
+    addAll([
+      Sky(),
+      Ground(),
+      bird = Player(),
+      score = buildScore(),
+    ]);
+
+    interval.onTick = () => add(PipeGroup());
+  }
+
+  TextBoxComponent buildScore() {
+    return TextBoxComponent(
+        text: 'Score: 0',
+        position: Vector2(size.x / 2, size.y / 2 * 0.2),
+        anchor: Anchor.center,
+        textRenderer: TextPaint(
+            style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Game')));
   }
 
   @override
   void onTap() {
-    _player.fly();
+    super.onTap();
+    bird.fly();
   }
-
-  double _timeSinceBox = 0;
-  double _boxInterval = 1;
 
   @override
   void update(double dt) {
     super.update(dt);
-    _timeSinceBox += dt;
-    if (_timeSinceBox > _boxInterval) {
-      add(BoxStack());
-      _timeSinceBox = 0;
-    }
+    interval.update(dt);
+
+    score.text = "Score: ${bird.score}";
   }
 }

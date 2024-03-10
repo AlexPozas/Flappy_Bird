@@ -1,19 +1,38 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
-
+import 'package:flappybird_dj/configuracion/assets.dart';
+import 'package:flappybird_dj/configuracion/configuration.dart';
+import 'package:flappybird_dj/configuracion/pipe_position.dart';
 import 'package:flappybird_dj/pantallas/game.dart';
 
-class Box extends SpriteComponent with HasGameRef<FlappyEmberGame> {
-  Box({required Vector2 position})
-      : super(position: position, size: initialSize);
+class Pipe extends SpriteComponent with HasGameRef<GamePage> {
+  Pipe({
+    required this.pipePosition,
+    required this.height,
+  });
 
-  static Vector2 initialSize = Vector2.all(50);
+  @override
+  final double height;
+  final PipePosition pipePosition;
 
   @override
   Future<void> onLoad() async {
-    final boxImage = await Flame.images.load('boxes/1.png');
-    sprite = Sprite(boxImage);
+    final pipe = await Flame.images.load(Assets.pipe);
+    final pipeRotated = await Flame.images.load(Assets.pipeRotated);
+    size = Vector2(50, height);
+
+    switch (pipePosition) {
+      case PipePosition.top:
+        position.y = 0;
+        sprite = Sprite(pipeRotated);
+        break;
+      case PipePosition.bottom:
+        position.y = gameRef.size.y - size.y - Configuration.groundHeight;
+        sprite = Sprite(pipe);
+        break;
+    }
+
     add(RectangleHitbox());
   }
 }
