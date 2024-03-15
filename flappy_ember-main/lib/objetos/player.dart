@@ -1,25 +1,36 @@
+import 'package:cupertino_base/configuracion/appdata.dart';
+import 'package:cupertino_base/configuracion/birdmovement.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame_audio/flame_audio.dart';
-import 'package:flappybird_dj/configuracion/assets.dart';
-import 'package:flappybird_dj/configuracion/birdmovement.dart';
-import 'package:flappybird_dj/configuracion/configuration.dart';
+import 'package:cupertino_base/configuracion/configuration.dart';
 
-import 'package:flappybird_dj/pantallas/game.dart';
+import 'package:cupertino_base/configuracion/assets.dart';
+import 'package:cupertino_base/pantallas/game.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/animation.dart';
 
 class Player extends SpriteGroupComponent<BirdMovement>
     with HasGameRef<GamePage>, CollisionCallbacks {
-  Player();
+  Player(bool p, int i, bool f) : super() {
+    this.p1 = p;
+    this.id = i;
+    this.fainted = f; //Temporal
+  }
 
+  String? name;
+  bool p1 = false;
+  bool fainted = false;
   int score = 0;
+  int id = 0;
 
   @override
   Future<void> onLoad() async {
-    final birdMidFlap = await gameRef.loadSprite(Assets.birdMidFlap);
-    final birdUpFlap = await gameRef.loadSprite(Assets.birdUpFlap);
-    final birdDownFlap = await gameRef.loadSprite(Assets.birdDownFlap);
+    final birdMidFlap = await gameRef.loadSprite(Assets.birdMidFlap[id]);
+    final birdUpFlap = await gameRef.loadSprite(Assets.birdUpFlap[id]);
+    final birdDownFlap = await gameRef.loadSprite(Assets.birdDownFlap[id]);
+
+    name = AppData.instance.playersName[id];
 
     size = Vector2(50, 40);
     position = Vector2(50, gameRef.size.y / 2 - size.y / 2);
@@ -30,7 +41,9 @@ class Player extends SpriteGroupComponent<BirdMovement>
       BirdMovement.down: birdDownFlap
     };
 
-    add(CircleHitbox());
+    if (p1) {
+      add(CircleHitbox());
+    }
   }
 
   void fly() {
@@ -47,7 +60,8 @@ class Player extends SpriteGroupComponent<BirdMovement>
   void onCollisionStart(
       Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
-    gameOver();
+    AppData.instance.setFainted(id);
+    //gameOver();
   }
 
   void gameOver() {
@@ -60,14 +74,21 @@ class Player extends SpriteGroupComponent<BirdMovement>
   void reset() {
     position = Vector2(50, gameRef.size.y / 2 - size.y / 2);
     score = 0;
+    fainted = false;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    position.y += Configuration.birdVelocity * dt;
+    if (p1 && !fainted) position.y += Configuration.birdVelocity * dt;
     if (position.y <= 0) {
-      gameOver();
+      //gameOver();
+      AppData.instance.setFainted(id);
     }
+    if (AppData.instance.gameover) gameOver();
+  }
+
+  int getScore() {
+    return score;
   }
 }

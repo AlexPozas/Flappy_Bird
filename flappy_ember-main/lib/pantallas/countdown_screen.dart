@@ -1,7 +1,6 @@
-import 'package:flappybird_dj/pantallas/game.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
+import 'package:cupertino_base/pantallas/game.dart';
 
 class CountDown extends StatefulWidget {
   final GamePage game;

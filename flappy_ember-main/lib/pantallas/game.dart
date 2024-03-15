@@ -1,18 +1,19 @@
+import 'package:cupertino_base/configuracion/appdata.dart';
+import 'package:cupertino_base/configuracion/configuration.dart';
+import 'package:cupertino_base/objetos/box_stack.dart';
+import 'package:cupertino_base/objetos/ground.dart';
+import 'package:cupertino_base/objetos/player.dart';
+import 'package:cupertino_base/objetos/sky.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flappybird_dj/configuracion/configuration.dart';
-import 'package:flappybird_dj/objetos/box_stack.dart';
-import 'package:flappybird_dj/objetos/ground.dart';
-import 'package:flappybird_dj/objetos/player.dart';
-import 'package:flappybird_dj/objetos/sky.dart';
 
 import 'package:flutter/material.dart';
 
 class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
   GamePage();
 
-  late Player bird;
+  late Player bird, bird2, bird3;
   late TextBoxComponent score;
   Timer interval = Timer(Configuration.pipeInterval, repeat: true);
   bool isHit = false;
@@ -22,7 +23,10 @@ class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
     addAll([
       Sky(),
       Ground(),
-      bird = Player(),
+      bird = AppData.instance.playersList[0],
+      bird2 = AppData.instance.playersList[1],
+      bird3 = AppData.instance.playersList[2],
+      bird3 = AppData.instance.playersList[3],
       score = buildScore(),
     ]);
 

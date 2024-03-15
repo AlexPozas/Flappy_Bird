@@ -1,10 +1,11 @@
+import 'package:cupertino_base/configuracion/pipe_position.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
-import 'package:flappybird_dj/configuracion/assets.dart';
-import 'package:flappybird_dj/configuracion/configuration.dart';
-import 'package:flappybird_dj/configuracion/pipe_position.dart';
-import 'package:flappybird_dj/pantallas/game.dart';
+import 'package:cupertino_base/configuracion/configuration.dart';
+
+import 'package:cupertino_base/configuracion/assets.dart';
+import 'package:cupertino_base/pantallas/game.dart';
 
 class Pipe extends SpriteComponent with HasGameRef<GamePage> {
   Pipe({

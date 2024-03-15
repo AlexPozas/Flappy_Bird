@@ -1,7 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
-import 'package:flappybird_dj/configuracion/assets.dart';
-import 'package:flappybird_dj/pantallas/game.dart';
+
+import 'package:cupertino_base/configuracion/assets.dart';
+import 'package:cupertino_base/pantallas/game.dart';
 
 class Sky extends SpriteComponent with HasGameRef<GamePage> {
   Sky();

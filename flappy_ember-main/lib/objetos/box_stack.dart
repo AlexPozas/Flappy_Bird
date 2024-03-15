@@ -1,13 +1,14 @@
 import 'dart:math';
 
+import 'package:cupertino_base/configuracion/appdata.dart';
+import 'package:cupertino_base/configuracion/pipe_position.dart';
+import 'package:cupertino_base/objetos/box.dart';
 import 'package:flame/components.dart';
-import 'package:flame_audio/flame_audio.dart';
-import 'package:flappybird_dj/configuracion/assets.dart';
-import 'package:flappybird_dj/configuracion/configuration.dart';
-import 'package:flappybird_dj/configuracion/pipe_position.dart';
+import 'package:cupertino_base/configuracion/configuration.dart';
 
-import 'package:flappybird_dj/objetos/box.dart';
-import 'package:flappybird_dj/pantallas/game.dart';
+import 'package:cupertino_base/configuracion/assets.dart';
+import 'package:cupertino_base/pantallas/game.dart';
+import 'package:flame_audio/flame_audio.dart';
 
 class PipeGroup extends PositionComponent with HasGameRef<GamePage> {
   PipeGroup();
@@ -40,9 +41,9 @@ class PipeGroup extends PositionComponent with HasGameRef<GamePage> {
       updateScore();
     }
 
-    if (game.isHit) {
+    if (AppData.instance.gameover) {
       removeFromParent();
-      gameRef.isHit = false;
+      //gameRef.isHit = false;
     }
   }
 
