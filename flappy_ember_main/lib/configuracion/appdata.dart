@@ -1,18 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cupertino_base/objetos/player.dart';
 import 'package:cupertino_base/pantallas/game.dart';
 import 'package:cupertino_base/pantallas/websockets_manager.dart';
+import 'package:flame/components.dart';
 
 import 'package:flutter/material.dart';
 
-class AppData {
+class AppData extends ChangeNotifier {
   static AppData instance = AppData();
 
   AppData();
 
   //Variables
-  List<String> playersName = ['Pepe', 'Jose Roberto', 'Joel', 'Dani'];
   List<int> playerScore = [0, 0, 0, 0];
   List<Player> playersList = [
     Player(true, 0, false),
@@ -21,15 +22,25 @@ class AppData {
     Player(false, 3, true)
   ];
 
-  String name = "";
+  String myName = "";
   bool gameover = false;
   late GamePage game;
+  String myId = "";
+  int myIdNum = 0;
 
   late WebSocketsHandler websocket;
 
   //Functions
   static AppData getInstance() {
     return instance;
+  }
+
+  String getPlayerName(id) {
+    return playersList[id].name;
+  }
+
+  int getPlayerScore(id) {
+    return playersList[id].score;
   }
 
   void resetGame() {
@@ -62,9 +73,11 @@ class AppData {
     }
   }
 
-  void initializeWebsocket(String serverIp) {
+  void initializeWebsocket(String serverIp, String name, GamePage g) {
+    this.game = g;
     websocket = WebSocketsHandler();
     websocket.connectToServer(serverIp, serverMessageHandler);
+    myName = name;
   }
 
   void serverMessageHandler(String message) {
@@ -73,9 +86,35 @@ class AppData {
     final data = json.decode(message);
 
     if (data is Map<String, dynamic>) {
-      if (data['type'] == 'loquesea') {
-        // lo que hay que hacer
+      if (data['type'] == 'welcome') {
+        websocket.sendMessage('{ "type": "init", "name": "$myName"}');
+        sleep(Duration(seconds: 1));
+        myId = data['id'];
       }
+      if (data['type'] == 'waitingList') {
+        List<dynamic> list = data['data'];
+        print(list);
+        for (int i = 0; i < list.length; i++) {
+          playersList[i].name = list[i]['name'];
+          notifyListeners();
+          if (list[i]['id'] == myId) myIdNum = i;
+          print(playersList[i].name);
+        }
+        game.overlays.remove('mainMenu');
+        game.overlays.add('waiting');
+        AppData.instance.gameover = false;
+      }
+    }
+  }
+
+  void resetPlayerList() {
+    for (Player player in playersList) {
+      player.name = "Waiting...";
+      player.p1 = false;
+      player.fainted = false;
+      player.score = 0;
+      player.id = 0;
+      player.position = Vector2(50, game.size.y / 2 - player.size.y / 2);
     }
   }
 }

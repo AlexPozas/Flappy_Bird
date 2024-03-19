@@ -9,6 +9,9 @@ import 'package:cupertino_base/configuracion/assets.dart';
 import 'package:cupertino_base/pantallas/game.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/animation.dart';
+import 'package:flutter/services.dart';
+
+import 'package:flutter/material.dart';
 
 class Player extends SpriteGroupComponent<BirdMovement>
     with HasGameRef<GamePage>, CollisionCallbacks {
@@ -18,7 +21,7 @@ class Player extends SpriteGroupComponent<BirdMovement>
     this.fainted = f; //Temporal
   }
 
-  String? name;
+  String name = "P1";
   bool p1 = false;
   bool fainted = false;
   int score = 0;
@@ -29,8 +32,6 @@ class Player extends SpriteGroupComponent<BirdMovement>
     final birdMidFlap = await gameRef.loadSprite(Assets.birdMidFlap[id]);
     final birdUpFlap = await gameRef.loadSprite(Assets.birdUpFlap[id]);
     final birdDownFlap = await gameRef.loadSprite(Assets.birdDownFlap[id]);
-
-    name = AppData.instance.playersName[id];
 
     size = Vector2(50, 40);
     position = Vector2(50, gameRef.size.y / 2 - size.y / 2);
@@ -43,6 +44,12 @@ class Player extends SpriteGroupComponent<BirdMovement>
 
     if (p1) {
       add(CircleHitbox());
+      add(TextBoxComponent(
+          text: name,
+          position: Vector2(position.x, -20),
+          anchor: Anchor.center,
+          textRenderer: TextPaint(
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10))));
     }
   }
 
@@ -86,6 +93,10 @@ class Player extends SpriteGroupComponent<BirdMovement>
       AppData.instance.setFainted(id);
     }
     if (AppData.instance.gameover) gameOver();
+  }
+
+  void setName(String name) {
+    this.name = name;
   }
 
   int getScore() {

@@ -47,9 +47,7 @@ class MainMenu extends StatelessWidget {
               child: TextField(
                 controller: _ipController,
                 decoration: InputDecoration(
-                  labelText: 'IP:Port',
-                  border: OutlineInputBorder(),
-                ),
+                    labelText: 'IP:Port', border: OutlineInputBorder()),
               ),
             ),
             SizedBox(
@@ -57,10 +55,10 @@ class MainMenu extends StatelessWidget {
             ),
             ElevatedButton(
                 onPressed: () {
-                  AppData.instance.initializeWebsocket(_ipController.text);
-                  game.overlays.remove('mainMenu');
-                  game.overlays.add('waiting');
-                  AppData.instance.gameover = false;
+                  AppData.instance.initializeWebsocket(
+                      /*_ipController.text*/ "localhost:8888",
+                      _nameController.text,
+                      game);
                 },
                 child: Text('Dale'))
           ],
