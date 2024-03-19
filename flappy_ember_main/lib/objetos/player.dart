@@ -29,9 +29,9 @@ class Player extends SpriteGroupComponent<BirdMovement>
 
   @override
   Future<void> onLoad() async {
-    final birdMidFlap = await gameRef.loadSprite(Assets.birdMidFlap[id]);
-    final birdUpFlap = await gameRef.loadSprite(Assets.birdUpFlap[id]);
-    final birdDownFlap = await gameRef.loadSprite(Assets.birdDownFlap[id]);
+    final birdMidFlap = await gameRef.loadSprite(Assets.birdMidFlap);
+    final birdUpFlap = await gameRef.loadSprite(Assets.birdUpFlap);
+    final birdDownFlap = await gameRef.loadSprite(Assets.birdDownFlap);
 
     size = Vector2(50, 40);
     position = Vector2(50, gameRef.size.y / 2 - size.y / 2);
