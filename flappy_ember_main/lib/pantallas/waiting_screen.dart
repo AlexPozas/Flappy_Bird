@@ -60,7 +60,7 @@ class _WaitingRoomState extends State<WaitingRoom> {
                     fontFamily: 'Game',
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
-                    color: Assets.fontColors[index],
+                    color: Color.fromRGBO(0, 0, 0, 1),
                     letterSpacing: 1.5,
                     shadows: [
                       Shadow(

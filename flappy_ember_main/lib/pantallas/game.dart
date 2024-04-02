@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
   GamePage();
 
-  late Player bird, bird2, bird3;
   late TextBoxComponent score;
   Timer interval = Timer(Configuration.pipeInterval, repeat: true);
   bool isHit = false;
@@ -23,14 +22,12 @@ class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
     addAll([
       Sky(),
       Ground(),
-      bird = AppData.instance.playersList[0],
-      bird2 = AppData.instance.playersList[1],
-      bird3 = AppData.instance.playersList[2],
-      bird3 = AppData.instance.playersList[3],
+      AppData.instance.playersList[0],
+      AppData.instance.playersList[1],
+      AppData.instance.playersList[2],
+      AppData.instance.playersList[3],
       score = buildScore(),
     ]);
-
-    interval.onTick = () => add(PipeGroup());
   }
 
   TextBoxComponent buildScore() {
@@ -48,7 +45,7 @@ class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
   @override
   void onTap() {
     super.onTap();
-    bird.fly();
+    AppData.instance.playersList[AppData.instance.myIdNum].fly();
   }
 
   @override
@@ -56,6 +53,22 @@ class GamePage extends FlameGame with TapDetector, HasCollisionDetection {
     super.update(dt);
     interval.update(dt);
 
-    score.text = "Score: ${bird.score}";
+    score.text =
+        "Score: ${AppData.instance.playersList[AppData.instance.myIdNum].score}";
+
+    AppData.instance.sendMyPosition();
+  }
+
+  void resetGame() {
+    onLoad(); // Re-initialize the game state
+
+    /*addAll([
+      Background(),
+      Ground(),
+      AppData.instance.playersList[0],
+      AppData.instance.playersList[1],
+      AppData.instance.playersList[2],
+      AppData.instance.playersList[3],
+    ]);*/
   }
 }

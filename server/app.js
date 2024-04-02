@@ -9,7 +9,7 @@ const debug = true
     From client to server:
         - Client init           { "type": "init", "name": "name" }
         - Player movement       { "type": "move", "x": 0, "y": 0 }
-        - Player loose          { "type": "loose", "puntuation": 0}
+        - Player loose          { "type": "loose", "puntuation": 0, "positionList": 0}
 
     From server to client:
         - Welcome message       { "type": "welcome", "value": "Welcome to the server", "id": 'ABC123', "list": [] }
@@ -20,8 +20,9 @@ const debug = true
         - All clients data      { "type": "data", "data": [{"id": 'ABC123', "name": 'Abcd', "x": 0, "y": 0 }, {"id": 'XYZ789', "name": 'Wxyz', "x": 0, "y": 0 }] }
         - Someone connects      { "type": "newClient", id: 'ABC123', "name": "Abcd" }
         - Start game            { "type": "start", "data": ""}
-        - Someone loose         { "type": "lost", "data": "{"id": 'ABC123', "name": 'Abcd', "x": 0, "y": 0 }"}
+        - Someone loose         { "type": "lost", "positionList": 0 }
         - All clients lost      { "type": "finnish", "data":"[{ "name": 'Abcd', "puntuation": 0 }, { "name": 'Wxyz', "puntuation": 0 }]"}
+        - Pipe group            { "type": "pipe", "spacing": 0.3, "centerY": 0.1}
 */
 
 ///////////////////
@@ -31,7 +32,8 @@ const debug = true
 var gameStarted = false;
 var startMessageSended = false;
 var playerLost = [];
-
+var pipeTimer = 0;
+var untilFirstPipe = 0;
 
 var ws = new webSockets()
 var gLoop = new gameLoop()
@@ -99,11 +101,21 @@ ws.onMessage = (socket, id, msg) => {
       clientData.name = obj.name
       let allClientsData = ws.getClientsData()
       if (allClientsData != null) {
-        socket.send(JSON.stringify({
+        ws.broadcast(JSON.stringify({
           type: "waitingList",
           value: "Waiting players",
           data: allClientsData
         }))
+
+        
+        if (allClientsData.length === 4) {
+          gameStarted = true;
+          console.log('game started');
+          if (!startMessageSended) {
+            ws.broadcast(JSON.stringify({ type: "start", data: "" }))
+          }
+          startMessageSended = true;
+        }
       }
       break;
     case "move":
@@ -112,9 +124,10 @@ ws.onMessage = (socket, id, msg) => {
       break
     case "loose":
       clientData.puntuation = obj.puntuation
+      var posList = obj.positionList
       ws.broadcast(JSON.stringify({
         type: "lost", 
-        data: clientData
+        positionList: posList
       }))
       playerLost.push(JSON.stringify({ name: clientData.name, puntuation: clientData.puntuation }))
   }
@@ -136,26 +149,44 @@ gLoop.run = (fps) => {
   // Aquest mètode s'intenta executar 30 cops per segon
 
   let clientsData = ws.getClientsData()
+  
+  // Mandem una pipe cada x segons
+  if (gameStarted) {
+    pipeTimer += 1/fps;
+    untilFirstPipe += 1/fps;
+
+    if (pipeTimer >= 2.25 && untilFirstPipe >= 3.25) {
+      const rSpacing =  130 + Math.random() * (500 / 4);
+      const centerY = rSpacing + Math.random() * (500 - rSpacing);
+      ws.broadcast(JSON.stringify({type: "pipe", spacing: rSpacing, centerY: centerY}));
+      pipeTimer = 0;
+    } else if (untilFirstPipe < 3.25) {
+      pipeTimer = 0;
+    }
+  }
 
   // Gestionar aquí la partida, estats i final
-  if (clientsData.length === 4) {
-    gameStarted = true;
-    if (!startMessageSended) {
-      ws.broadcast(JSON.stringify({ type: "start", data: "" }))
-    }
-    startMessageSended = true;
+  if (clientsData.length === 0 && startMessageSended) {
+    gameStarted = false;
+    startMessageSended = false;
+    pipeTimer = 0;
+    untilFirstPipe = 0;
+    console.log('game ended');
   }
 
-  if (gameStarted) {
-    console.log(clientsData)  
-    ws.broadcast(JSON.stringify({ type: "data", value: clientsData }))
-  } else {
-
-  }
+  if (gameStarted && startMessageSended) {
+    console.log(clientsData)
+    ws.broadcast(JSON.stringify({ type: "data", data: clientsData }))
+  } 
 
   if (playerLost.length === 4) {
     gameLoop = false;
+    gameStarted = false;
+    startMessageSended = false;
+    console.log('game ended');
     ws.broadcast(JSON.stringify({ type: "finnish", data: playerLost }))
+    pipeTimer = 0;
+    untilFirstPipe = 0;
     playerLost = []
   }
 

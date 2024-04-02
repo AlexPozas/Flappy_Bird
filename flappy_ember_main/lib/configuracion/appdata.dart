@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cupertino_base/configuracion/birdmovement.dart';
+import 'package:cupertino_base/objetos/box_stack.dart';
 import 'package:cupertino_base/objetos/player.dart';
 import 'package:cupertino_base/pantallas/game.dart';
 import 'package:cupertino_base/pantallas/websockets_manager.dart';
@@ -16,10 +18,10 @@ class AppData extends ChangeNotifier {
   //Variables
   List<int> playerScore = [0, 0, 0, 0];
   List<Player> playersList = [
-    Player(true, 0, false),
-    Player(false, 1, true),
-    Player(false, 2, true),
-    Player(false, 3, true)
+    Player(id: 0),
+    Player(id: 1),
+    Player(id: 2),
+    Player(id: 3)
   ];
 
   String myName = "";
@@ -27,8 +29,10 @@ class AppData extends ChangeNotifier {
   late GamePage game;
   String myId = "";
   int myIdNum = 0;
+  bool charging = false;
 
   late WebSocketsHandler websocket;
+  bool wsIsOn = false;
 
   //Functions
   static AppData getInstance() {
@@ -44,9 +48,25 @@ class AppData extends ChangeNotifier {
   }
 
   void resetGame() {
-    for (int i = 0; i < playersList.length; i++) {
-      playersList[i].reset();
+    playersList.clear();
+    for (int i = 0; i < 4; i++) {
+      playersList.add(Player());
     }
+    websocket.closeConnection();
+  }
+
+  void setPlayers() {
+    gameover = false;
+    List<Player> tempList = [];
+    for (Player b in playersList) {
+      if (b.p1) {
+        tempList.add(Player(p: true, name: b.name, id: b.id));
+      } else {
+        tempList.add(Player(name: b.name, id: b.id));
+      }
+    }
+    playersList.clear();
+    playersList = tempList;
   }
 
   void getScore() {
@@ -78,6 +98,7 @@ class AppData extends ChangeNotifier {
     websocket = WebSocketsHandler();
     websocket.connectToServer(serverIp, serverMessageHandler);
     myName = name;
+    wsIsOn = true;
   }
 
   void serverMessageHandler(String message) {
@@ -90,31 +111,68 @@ class AppData extends ChangeNotifier {
         websocket.sendMessage('{ "type": "init", "name": "$myName"}');
         sleep(Duration(seconds: 1));
         myId = data['id'];
-      }
-      if (data['type'] == 'waitingList') {
+        gameover = false;
+      } else if (data['type'] == 'waitingList') {
         List<dynamic> list = data['data'];
-        print(list);
         for (int i = 0; i < list.length; i++) {
           playersList[i].name = list[i]['name'];
-          notifyListeners();
-          if (list[i]['id'] == myId) myIdNum = i;
-          print(playersList[i].name);
+          if (list[i]['id'] == myId) {
+            myIdNum = i;
+            playersList[i].p1 = true;
+            game.resetGame();
+          }
         }
-        game.overlays.remove('mainMenu');
-        game.overlays.add('waiting');
-        AppData.instance.gameover = false;
+        notifyListeners();
+        if (game.overlays.isActive('mainMenu')) {
+          game.overlays.add('waiting');
+          game.overlays.remove('mainMenu');
+        } else {
+          game.overlays.remove('waiting');
+          game.overlays.add('waiting');
+        }
+      } else if (data['type'] == 'start') {
+        setPlayers();
+        game.resetGame();
+        game.overlays.add('countdown');
+        game.overlays.remove('waiting');
+      } else if (data['type'] == 'data') {
+        List<dynamic> list = data['data'];
+        for (int i = 0; i < list.length; i++) {
+          if (list[i]['id'] != myId) {
+            playersList[i].position.x = double.parse(list[i]['x']);
+            playersList[i].position.y = double.parse(list[i]['y']);
+            playersList[i].score = int.parse(list[i]["puntuation"]);
+          }
+        }
+      } else if (data["type"] == "pipe") {
+        game.add(PipeGroup(data["spacing"], data["centerY"]));
+      } else if (data['type'] == 'lost') {
+        int posList = int.parse(data['positionList']);
+        playersList[posList].fainted = true;
+        playersList[posList].current = BirdMovement.death;
+      } else if (data['type'] == 'finnish') {
+        gameover = true;
+        List<dynamic> list = data['data'];
+        for (int i = 0; i < list.length; i++) {
+          playersList[i].score = int.parse(list[i]['puntuation']);
+        }
+        game.overlays.add("gameover");
       }
     }
   }
 
-  void resetPlayerList() {
-    for (Player player in playersList) {
-      player.name = "Waiting...";
-      player.p1 = false;
-      player.fainted = false;
-      player.score = 0;
-      player.id = 0;
-      player.position = Vector2(50, game.size.y / 2 - player.size.y / 2);
+  void sendMyPosition() {
+    if (wsIsOn) {
+      double myX = playersList[myIdNum].position.x;
+      double myY = playersList[myIdNum].position.y;
+
+      websocket.sendMessage('{ "type": "move", "x": "$myX", "y": "$myY" }');
     }
+  }
+
+  void sendFainted() {
+    int myScore = playersList[myIdNum].score;
+    websocket.sendMessage(
+        '{  "type": "loose", "puntuation": "$myScore" , "positionList": "$myIdNum"}');
   }
 }
